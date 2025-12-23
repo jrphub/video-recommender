@@ -1,0 +1,6 @@
+userId,username,age,gender,city,country,language,timezone
+u001,alice,25,female,New York,USA,en,UTC-5
+u002,bob,32,male,London,UK,en,UTC+0
+u003,carlos,28,male,Madrid,Spain,es,UTC+1
+u004,diya,35,female,Bangalore,India,en,UTC+5:30
+u005,emma,22,female,Sydney,Australia,en,UTC+10
