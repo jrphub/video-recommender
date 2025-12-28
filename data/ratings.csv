@@ -1,0 +1,7 @@
+userId,videoId,rating,user_idx,video_idx
+u001,v001,3,0,0
+u001,v002,1,0,1
+u002,v003,4,1,2
+u003,v004,1,2,3
+u004,v005,3,3,4
+u005,v001,1,4,0
