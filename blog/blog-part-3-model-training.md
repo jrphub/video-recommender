@@ -63,7 +63,7 @@ from scipy.sparse import coo_matrix
 from implicit.als import AlternatingLeastSquares
 
 # Load data
-ratings = pd.read_csv("data/ratings.csv")
+ratings = pd.read_csv("../data/ratings.csv")
 ```
 
 ### Step 1: Loading Dependencies
@@ -256,7 +256,7 @@ Consider a real system with:
 - 100,000 videos
 - Each user watches 50 videos on average
 
-A dense matrix would require: 1M × 100K = 100 billion cells!  
+A dense matrix would require: 1M × 100K = 100 billion cells!
 A sparse matrix stores only: 1M × 50 = 50 million values (2000× smaller!)
 
 ### The 20 Hidden Factors
@@ -340,11 +340,11 @@ This calculates: "What fraction of our top K recommendations were actually relev
 
 ## What We Learned
 
-✅ What matrix factorization means and why it's powerful  
-✅ How ALS alternates between user and video optimization  
-✅ Why sparse matrices are essential for recommendation systems  
-✅ The role of regularization in preventing overfitting  
-✅ How to train a collaborative filtering model with real code  
+✅ What matrix factorization means and why it's powerful
+✅ How ALS alternates between user and video optimization
+✅ Why sparse matrices are essential for recommendation systems
+✅ The role of regularization in preventing overfitting
+✅ How to train a collaborative filtering model with real code
 
 ## What's Next?
 
@@ -352,5 +352,5 @@ Now that our model is trained, it's time to use it! In Part 4, we'll write code 
 
 ---
 
-**Previous**: [← Part 2 - Data Preparation](blog-part-2-data-preparation.md)  
+**Previous**: [← Part 2 - Data Preparation](blog-part-2-data-preparation.md)
 **Next**: [Part 4 - Generating Recommendations →](blog-part-4-recommendations.md)

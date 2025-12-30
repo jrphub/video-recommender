@@ -58,13 +58,13 @@ def invocations(req: RecommendRequest):
 def recommend(user_id: str, k: int = 5):
     try:
         recommendations = get_recommendations(user_id, k)
-        
+
         if not recommendations:
             raise HTTPException(
                 status_code=404,
                 detail="No recommendations available for user"
             )
-        
+
         return {
             "userId": user_id,
             "recommendations": [
@@ -173,13 +173,13 @@ This is the **standard endpoint name** for AWS SageMaker. Using this convention 
 def recommend(user_id: str, k: int = 5):
     try:
         recommendations = get_recommendations(user_id, k)
-        
+
         if not recommendations:
             raise HTTPException(
                 status_code=404,
                 detail="No recommendations available for user"
             )
-        
+
         return {
             "userId": user_id,
             "recommendations": [
@@ -218,7 +218,7 @@ def recommend(user_id: str, k: int = 5):
        ]
    }
    ```
-   
+
    Transforms tuples into clean JSON:
    ```
    [("v001", 0.91), ("v005", 0.045)]
@@ -231,7 +231,7 @@ def recommend(user_id: str, k: int = 5):
    except KeyError:
        raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
    ```
-   
+
    If the user doesn't exist in our mappings, return a 404 error.
 
 ### The Server Entry Point
@@ -306,10 +306,10 @@ RUN apt-get update && apt-get install -y \
     gcc g++ build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY ../requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY .. .
 
 ENV OPENBLAS_NUM_THREADS=1
 
@@ -558,8 +558,8 @@ aws ecr delete-repository \
 
 ## Cost Considerations
 
-**Local Docker:** Free  
-**AWS ECR Storage:** ~$0.10/GB/month  
+**Local Docker:** Free
+**AWS ECR Storage:** ~$0.10/GB/month
 **AWS SageMaker:**
 - ml.t2.medium: ~$0.065/hour (~$47/month if running 24/7)
 - ml.m5.large: ~$0.134/hour (~$97/month)
@@ -571,13 +571,13 @@ aws ecr delete-repository \
 
 ## What We Learned
 
-✅ How to build a REST API with FastAPI  
-✅ Request validation with Pydantic  
-✅ Containerizing applications with Docker  
-✅ Multi-architecture Docker builds  
-✅ Deploying to AWS SageMaker  
-✅ Working with AWS ECR for container storage  
-✅ Production considerations (health checks, error handling)  
+✅ How to build a REST API with FastAPI
+✅ Request validation with Pydantic
+✅ Containerizing applications with Docker
+✅ Multi-architecture Docker builds
+✅ Deploying to AWS SageMaker
+✅ Working with AWS ECR for container storage
+✅ Production considerations (health checks, error handling)
 
 ## The Complete Workflow
 
@@ -639,5 +639,5 @@ Keep experimenting, keep learning, and happy coding!
 
 ---
 
-**Previous**: [← Part 4 - Generating Recommendations](blog-part-4-recommendations.md)  
+**Previous**: [← Part 4 - Generating Recommendations](blog-part-4-recommendations.md)
 **Start Over**: [Part 1 - Introduction →](blog-part-1-introduction.md)

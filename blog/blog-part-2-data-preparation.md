@@ -35,7 +35,7 @@ import pandas as pd
 import pickle
 
 # Load interactions
-interactions = pd.read_csv("data/interactions.csv")
+interactions = pd.read_csv("../data/interactions.csv")
 
 # Aggregate interaction strength per user-video pair
 ratings = (
@@ -233,10 +233,10 @@ Feature engineering completed.
 
 ## What We Learned
 
-✅ How to aggregate multiple interactions into single ratings  
-✅ How to create numerical mappings from string IDs  
-✅ How to use pandas for data transformation  
-✅ How to save Python objects with pickle  
+✅ How to aggregate multiple interactions into single ratings
+✅ How to create numerical mappings from string IDs
+✅ How to use pandas for data transformation
+✅ How to save Python objects with pickle
 ✅ Why feature engineering is crucial for machine learning
 
 ## What's Next?
@@ -245,5 +245,5 @@ Now that our data is clean and structured, we're ready to train the recommendati
 
 ---
 
-**Previous**: [← Part 1 - Introduction](blog-part-1-introduction.md)  
+**Previous**: [← Part 1 - Introduction](blog-part-1-introduction.md)
 **Next**: [Part 3 - Training the ALS Model →](blog-part-3-model-training.md)
