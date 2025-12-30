@@ -1,0 +1,11 @@
+{
+  "EndpointConfigName": "video-recommender-config",
+  "ProductionVariants": [
+    {
+      "VariantName": "AllTraffic",
+      "ModelName": "video-recommender-model",
+      "InitialInstanceCount": 1,
+      "InstanceType": "ml.t2.medium"
+    }
+  ]
+}

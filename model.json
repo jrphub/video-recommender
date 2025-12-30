@@ -1,0 +1,8 @@
+{
+  "ModelName": "video-recommender-model",
+  "PrimaryContainer": {
+    "Image": "606222243378.dkr.ecr.us-east-1.amazonaws.com/video-recommender-api:latest",
+    "Mode": "SingleModel"
+  },
+  "ExecutionRoleArn": "arn:aws:iam::606222243378:role/sagemaker-video-recommender-role"
+}

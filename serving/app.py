@@ -1,6 +1,7 @@
 import sys
 import os
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -9,6 +10,9 @@ from vrmodels.recommend import recommend as get_recommendations
 
 app = FastAPI(title="Video Recommendation API")
 
+@app.get("/ping")
+def ping():
+	return {"status": "ok"}
 
 @app.get("/health")
 def health():
@@ -38,3 +42,11 @@ def recommend(user_id: str, k: int = 5):
 			status_code=404,
 			detail=f"User '{user_id}' not found"
 		)
+
+class RecommendRequest(BaseModel):
+	user_id: str
+	k: int = 5
+
+@app.post("/invocations")
+def invocations(req: RecommendRequest):
+	return recommender.recommend(req.user_id, req.k)

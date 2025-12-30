@@ -30,4 +30,7 @@ COPY serving/ serving/
 EXPOSE 8000
 
 # Start API
-CMD ["uvicorn", "serving.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["uvicorn", "serving.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+EXPOSE 8080
+ENTRYPOINT ["python", "serve.py"]
