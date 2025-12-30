@@ -14,12 +14,14 @@ app = FastAPI(title="Video Recommendation API")
 def ping():
 	return {"status": "ok"}
 
-@app.get("/health")
-def health():
-	return {"status": "ok"}
+class RecommendRequest(BaseModel):
+	user_id: str
+	k: int = 5
 
+@app.post("/invocations")
+def invocations(req: RecommendRequest):
+	return recommend(req.user_id, req.k)
 
-@app.get("/recommend")
 def recommend(user_id: str, k: int = 5):
 	try:
 		recommendations = get_recommendations(user_id, k)
@@ -42,11 +44,3 @@ def recommend(user_id: str, k: int = 5):
 			status_code=404,
 			detail=f"User '{user_id}' not found"
 		)
-
-class RecommendRequest(BaseModel):
-	user_id: str
-	k: int = 5
-
-@app.post("/invocations")
-def invocations(req: RecommendRequest):
-	return recommender.recommend(req.user_id, req.k)

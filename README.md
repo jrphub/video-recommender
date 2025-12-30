@@ -10,22 +10,27 @@ This system recommends videos to users based on their interaction history (watch
 
 ```
 video-recommender/
-├── data/                    # Dataset and processed files
-│   ├── interactions.csv     # Raw user-video interactions
-│   ├── ratings.csv          # Processed ratings (generated)
-│   └── mappings.pkl         # User/video ID mappings (generated)
-├── features/                # Feature engineering
-│   └── build_features.py    # Aggregates interactions into ratings
-├── vrmodels/                # ML model training and inference
-│   ├── train_model.py       # Trains ALS model
-│   ├── recommend.py         # Generates recommendations
-│   └── als_model.pkl        # Trained model (generated)
-├── serving/                 # API service
-│   └── app.py              # FastAPI application
-├── evaluation/              # Model evaluation
-│   └── offline_validation.py # Precision@K metric
-├── Dockerfile              # Docker container definition
-└── requirements.txt        # Python dependencies
+├── data/                       # Dataset and processed files
+│   ├── interactions.csv        # Raw user-video interactions
+│   ├── ratings.csv             # Processed ratings (generated)
+│   └── mappings.pkl            # User/video ID mappings (generated)
+├── features/                   # Feature engineering
+│   └── build_features.py       # Aggregates interactions into ratings
+├── vrmodels/                   # ML model training and inference
+│   ├── train_model.py          # Trains ALS model
+│   ├── recommend.py            # Generates recommendations
+│   └── als_model.pkl           # Trained model (generated)
+├── serving/                    # API service
+│   └── app.py                  # FastAPI application
+├── evaluation/                 # Model evaluation
+│   └── offline_validation.py   # Precision@K metric
+├── Dockerfile                  # Docker container definition
+├── serve.py                    # Entry point for running API server
+├── requirements.txt            # Python dependencies
+├── model.json                  # SageMaker model configuration
+├── endpoint-config.json        # SageMaker endpoint configuration
+├── sagemaker-trust.json        # IAM trust policy for SageMaker
+└── sagemaker-s3.json           # S3 access policy for SageMaker
 ```
 
 ## How It Works
@@ -155,17 +160,40 @@ List of (video_id, score) tuples
 #### Build and Run
 ```bash
 # Build the Docker image
-docker build -t video-recommender .
+docker buildx build \
+  --platform linux/amd64 \
+  --output=type=docker \
+  -t video-recommender-api:latest \
+  .
+
+# Verify the architecture
+docker inspect video-recommender-api:latest \
+  --format='{{.Architecture}}'
+
+# Output should be amd64
 
 # Run the container
-docker run -p 8000:8000 video-recommender
+docker run -p 8080:8080 video-recommender-api:latest
 
 # Or run in detached mode (background)
-docker run -d -p 8000:8000 --name video-recommender-app video-recommender
+docker run -d -p 8080:8080 video-recommender-api:latest
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be available at `http://localhost:8080`
 
+#### Testing the application
+```bash
+curl http://localhost:8080/ping
+
+curl -X 'POST' \
+  'http://localhost:8080/invocations' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_id": "u001",
+  "k": 5
+}'
+```
 #### Stop the Application
 ```bash
 # If running in foreground (non-detached mode)
@@ -183,11 +211,17 @@ docker rm -f video-recommender-app
 
 #### Docker Container Details
 - Base image: `python:3.10-slim`
-- Exposed port: `8000`
+- Exposed port: `8080`
+- Entry point: `serve.py` (runs Uvicorn server)
 - Includes system dependencies for scipy/implicit (gcc, g++, build-essential)
-- Runs FastAPI server with Uvicorn
+- Compatible with AWS SageMaker deployment
 
-### Option 2: Local Setup
+### Option 2: AWS Sagemaker
+
+- Create AWS IAM user : Ex: ```ml-user```
+- Refer below "AWS SageMaker Deployment" deployment section
+
+### Option 3: Local Setup
 
 #### Setup
 ```bash
@@ -216,26 +250,30 @@ python vrmodels/recommend.py
 
 #### Start the API Server
 ```bash
-uvicorn serving.app:app --host 0.0.0.0 --port 8000
+# Option 1: Using serve.py
+python serve.py
+
+# Option 2: Direct uvicorn command
+uvicorn serving.app:app --host 0.0.0.0 --port 8080
 ```
 
 ## REST API
 
 ### Base URL
 ```
-http://localhost:8000
+http://localhost:8080
 ```
 
 ### Endpoints
 
-#### 1. Health Check
+#### 1. Health Check / Ping
 ```bash
-GET /health
+GET /ping
 ```
 
 **Example:**
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8080/ping
 ```
 
 **Response:**
@@ -245,9 +283,18 @@ curl http://localhost:8000/health
 }
 ```
 
-#### 2. Get Recommendations
+#### 2. Get Recommendations (SageMaker-Compatible)
 ```bash
-GET /recommend?user_id={user_id}&k={number_of_recommendations}
+POST /invocations
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "user_id": "u001",
+  "k": 3
+}
 ```
 
 **Parameters:**
@@ -256,17 +303,19 @@ GET /recommend?user_id={user_id}&k={number_of_recommendations}
 
 **Example:**
 ```bash
-curl "http://localhost:8000/recommend?user_id=u002&k=3"
+curl -X POST http://localhost:8080/invocations \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "u001", "k": 3}'
 ```
 
 **Response:**
 ```json
 {
-  "userId": "u002",
+  "userId": "u001",
   "recommendations": [
-    {"videoId": "v001", "score": 0.91},
-    {"videoId": "v005", "score": 0.045},
-    {"videoId": "v004", "score": 0.00004}
+    {"videoId": "v005", "score": 0.9101369380950928},
+    {"videoId": "v004", "score": 5.7891011238098145e-05},
+    {"videoId": "v003", "score": -3.5017728805541992e-06}
   ]
 }
 ```
@@ -281,8 +330,111 @@ curl "http://localhost:8000/recommend?user_id=u002&k=3"
 
 ### API Documentation
 Once the server is running, access the interactive API documentation at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Swagger UI: `http://localhost:8080/docs`
+- ReDoc: `http://localhost:8080/redoc`
+
+## AWS SageMaker Deployment
+
+This application is designed to be compatible with AWS SageMaker for production deployment.
+
+### Prerequisites
+- AWS CLI configured with appropriate credentials
+- Docker installed
+- AWS ECR repository created
+- SageMaker execution role with appropriate permissions
+
+### Deployment Steps
+
+#### 1. Build and Push Docker Image to ECR
+```bash
+# Create ECR Repo
+aws ecr create-repository \
+  --repository-name video-recommender-api \
+  --region us-east-1
+
+# Optional, but recommended
+aws ecr put-image-scanning-configuration \
+  --repository-name video-recommender-api \
+  --image-scanning-configuration scanOnPush=true \
+  --region us-east-1
+
+# Authenticate Docker to ECR
+aws ecr get-login-password --region us-east-1 \
+| docker login \
+  --username AWS \
+  --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+
+# Build image following command above
+
+
+# Tag image
+docker tag video-recommender-api:latest \
+  <account-id>.dkr.ecr.us-east-1.amazonaws.com/video-recommender-api:latest
+
+# Push to ECR
+docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/video-recommender-api:latest
+```
+
+#### 2. Create SageMaker Model
+```bash
+aws sagemaker create-model --cli-input-json file://model.json
+```
+
+The `model.json` file contains:
+- Model name
+- ECR image URI
+- Execution role ARN
+
+#### 3. Create Endpoint Configuration
+```bash
+aws sagemaker create-endpoint-config --cli-input-json file://endpoint-config.json
+```
+
+The `endpoint-config.json` specifies:
+- Instance type (e.g., `ml.t2.medium`)
+- Initial instance count
+- Model name
+
+#### 4. Create and Deploy Endpoint
+Note : Billing starts from here
+```bash
+aws sagemaker create-endpoint \
+  --endpoint-name video-recommender-endpoint \
+  --endpoint-config-name video-recommender-config
+
+# Check status
+aws sagemaker describe-endpoint --endpoint-name video-recommender-endpoint --query 'EndpointStatus'
+```
+
+#### 5. Invoke the Endpoint
+```bash
+aws sagemaker-runtime invoke-endpoint \
+  --endpoint-name video-recommender-endpoint \
+  --content-type application/json \
+  --cli-binary-format raw-in-base64-out \
+  --body '{"user_id": "u001", "k": 3}' \
+  response.json
+
+cat response.json
+```
+
+### SageMaker-Specific Features
+- **`/ping` endpoint**: Used by SageMaker for health checks
+- **`/invocations` endpoint**: Standard SageMaker inference endpoint
+- **Port 8080**: Default port expected by SageMaker
+- **Request/Response format**: JSON-based, compatible with SageMaker runtime
+
+### Cleanup
+```bash
+# Delete endpoint
+aws sagemaker delete-endpoint --endpoint-name video-recommender-endpoint
+
+# Delete endpoint configuration
+aws sagemaker delete-endpoint-config --endpoint-config-name video-recommender-config
+
+# Delete model
+aws sagemaker delete-model --model-name video-recommender-model
+```
 
 ## Key Concepts
 
